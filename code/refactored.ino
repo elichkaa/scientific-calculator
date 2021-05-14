@@ -40,7 +40,7 @@ void loop()
   lcd.clear();
   printChosen(option);
   redirectToCalculation(option);
-  delay(800);
+  delay(1000);
   lcd.clear();
 }
 
@@ -162,16 +162,15 @@ void doOneInputCalculation(String sign, double (*function)(double))
   printResult(result);
 }
 
-String doBodmasCalculation(String expr, char sign, double (*function)(double*))
+String doBodmasFromString(String expr, char sign, double (*function)(double*))
 {
   while(checkIfSignIsContained(sign, expr) == 1){
-    
-  int counter = 0;
-  int innerCounter;
-  String firstNumStr, secondNumStr, firstPart, secondPart;
-  double result, firstNum, secondNum;
-  while(expr.length() > counter)
-  {
+    int counter = 0;
+    int innerCounter;
+    String firstNumStr, secondNumStr, firstPart, secondPart;
+    double result, firstNum, secondNum;
+    while(expr.length() > counter)
+    {
     if(expr[counter] == sign){
       	innerCounter = counter;
       	while((isDigit(expr[innerCounter - 1]) || expr[innerCounter - 1] == '.') && innerCounter - 1 >= 0)
@@ -197,44 +196,43 @@ String doBodmasCalculation(String expr, char sign, double (*function)(double*))
       expr = firstPart + String(result,3) + secondPart;
       break;
     }
+  	counter++;
+  }
   if(counter == expr.length())
   {
     signIsContained = false;
-  }
-  	counter++;
   }
   }
   return expr;
 }
 
-void doBodmas()
+void doBodmasCalculation()
 {
   String input;
-  //input = getInputForBodmas();
-  //Serial.println(input);
-  
-  input = "7+(6*5*2+3)";
-  String bracketExpression = getBracketExpression(input);
-  String resultFromBracketExpression = getResultFromBodmas(bracketExpression);
-  Serial.println(resultFromBracketExpression);
-  bracketExpression = "(" + bracketExpression;
-  bracketExpression += ")";
-  input.replace(bracketExpression, resultFromBracketExpression);
-  Serial.println(input);
-  String result = getResultFromBodmas(input);
+  printInstructionsForBodmas();
+  input = getInputForBodmas();
+  printBodmasExpression(input);
+  input = getInputWithoutBracketExpression(input);
+  String result = getFinalExpression(input);
   String output = result.substring(0,result.length()-1);
-  Serial.println(output);
+  printResult(output.toDouble());
 }
 
-String getResultFromBodmas(String expr)
+String getInputWithoutBracketExpression(String input){
+  String bracketExpression = getBracketExpression(input);
+  String resultFromBracketExpression = getFinalExpression(bracketExpression);
+  bracketExpression = "(" + bracketExpression + ")";
+  input.replace(bracketExpression, resultFromBracketExpression);
+  return input;
+}
+
+String getFinalExpression(String expr)
 {
   String result;
-  
-  result = doBodmasCalculation(expr, '/', &division);
-  result = doBodmasCalculation(result, '*', &multiplication);
-  result = doBodmasCalculation(result, '+', &addition);
-  result = doBodmasCalculation(result, '-', &subtraction);
-
+  result = doBodmasFromString(expr, '/', &division);
+  result = doBodmasFromString(result, '*', &multiplication);
+  result = doBodmasFromString(result, '+', &addition);
+  result = doBodmasFromString(result, '-', &subtraction);
   return result;
 }
 
@@ -328,7 +326,7 @@ void redirectToCalculation(int option)
     doOneInputCalculation("square of", &square);
     break;
   case 12:
-    doBodmas();
+    doBodmasCalculation();
     break;
   default:
     printError();
@@ -453,7 +451,7 @@ void printInstructions()
   delay(500);
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Instructions in Serial Monitor.");
+  lcd.print("Instructions in");
   lcd.setCursor(0, 1);
   lcd.print("Serial Monitor.");
   delay(1000);
@@ -481,4 +479,30 @@ void printInstructions()
   Serial.println("D means Delete");
   Serial.println("To enter press C.");
   Serial.println("To delete press D.");
+}
+
+void printInstructionsForBodmas(){
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Instructions in");
+  lcd.setCursor(0, 1);
+  lcd.print("Serial Monitor.");
+  Serial.println();
+  Serial.println("BODMAS Instructions:");
+  Serial.println("A substitutes (");
+  Serial.println("B substitutes )");
+  Serial.println("The # symbol is used to enter a sign.");
+  Serial.println("Pressing # one time is used for division (/)");
+  Serial.println("Pressing # two times is used for multiplication (*)");
+  Serial.println("Pressing # three times is used for addition (+)");
+  Serial.println("Pressing # four times is used for subtraction (-)");
+  delay(600);
+  lcd.clear();
+  lcd.print("Enter expression");
+}
+
+void printBodmasExpression(String expr){
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(expr);
 }
